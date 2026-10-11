@@ -6,7 +6,6 @@ LUDII Game Intelligence is an experimental AI project that brings together seman
 
 The central idea is to connect different kinds of evidence about a game—such as its description, rules, region, historical period, and visual characteristics—so that users can explore related games and ask questions in natural language.
 
-> **Status:** research/portfolio prototype. The repository contains several AI-related components at different levels of integration. This README distinguishes implemented behavior from intended workflows; it does not claim validated model accuracy or a fully automated end-to-end system.
 
 ## What the project explores
 
