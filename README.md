@@ -1,424 +1,365 @@
-::: {align="center"}
-# 🏺 Ludii Game Intelligence
+# LUDII Game Intelligence
 
-### Intelligence artificielle pour l'archéologie ludique
+### Exploring AI methods for historical board-game identification and discovery
 
-**Identifier · Contextualiser · Reconstruire**
+LUDII Game Intelligence is an experimental AI project that brings together semantic retrieval, a knowledge graph, computer-vision components, and large-language-model-assisted question answering to explore historical board games.
 
-Une plateforme d'IA qui combine vision par ordinateur, graphe de
-connaissances et génération augmentée par récupération pour analyser des
-jeux de table historiques à partir d'images, de descriptions ou de
-caractéristiques de plateau.
+The central idea is to connect different kinds of evidence about a game—such as its description, rules, region, historical period, and visual characteristics—so that users can explore related games and ask questions in natural language.
 
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![YOLOv8](https://img.shields.io/badge/Computer%20Vision-YOLOv8-111F68)](https://github.com/ultralytics/ultralytics)
-[![Neo4j](https://img.shields.io/badge/Knowledge%20Graph-Neo4j-008CC1?logo=neo4j&logoColor=white)](https://neo4j.com/)
-[![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![n8n](https://img.shields.io/badge/Workflow-n8n-EA4B71)](https://n8n.io/)
-:::
+> ****Status:**** research/portfolio prototype. The repository contains several AI-related components at different levels of integration. This README distinguishes implemented behavior from intended workflows; it does not claim validated model accuracy or a fully automated end-to-end system.
 
-------------------------------------------------------------------------
+## What the project explores
 
-## 📌 Présentation
+- ****Semantic retrieval:**** finding potentially relevant games from a natural-language query rather than relying only on exact keyword matches.
 
-Les jeux de table historiques sont des témoins précieux des
-civilisations, mais leur étude est compliquée par les variantes
-régionales, les informations historiques incomplètes et les plateaux ou
-pièces endommagés. **Ludii Game Intelligence** propose une approche
-intégrée pour assister leur analyse.
+- ****Knowledge-graph-supported exploration:**** using Neo4j to represent games and their relationships to rules, regions, periods, and other metadata.
 
-À partir d'une image ou d'une description, la plateforme peut détecter
-les pièces, construire une représentation exploitable du plateau,
-rechercher des jeux candidats dans un graphe de connaissances et fournir
-un contexte historique. Elle inclut également des fonctionnalités de
-recherche en langage naturel, de comparaison de jeux, de détection de
-pièces potentiellement manquantes et de reconstruction 3D.
+- ****LLM-assisted question answering:**** using retrieved game information as context for a Gemini-generated response when the provider is configured and available.
 
-Le projet s'appuie sur la base de jeux **Ludii** et associe plusieurs
-composants d'IA dans une application accessible par une interface
-Streamlit, une API REST FastAPI et des workflows n8n.
+- ****Computer vision:**** experimenting with YOLO-based detection of visual elements in board-game imagery, as a possible signal for identifying candidate games.
 
-## ✨ Fonctionnalités principales
+- ****3D representation:**** exploring board geometry and GLB export through the project's 3D-related code.
 
-  -----------------------------------------------------------------------
-  Fonctionnalité                      Description
-  ----------------------------------- -----------------------------------
-  📷 **Identification par image**     Détection du plateau et des pièces
-                                      avec YOLOv8, puis recherche de jeux
-                                      candidats.
+These are complementary experiments, not evidence that every modality is already connected into one reliable multimodal model. In particular, the visual identification and 3D-reconstruction paths need end-to-end validation before they can be described as fully automated.
 
-  📐 **Identification par             Recherche à partir de dimensions et
-  dimensions**                        de caractéristiques partielles du
-                                      plateau.
+## AI pipeline at a glance
 
-  🧠 **Raisonnement historique**      Exploitation d'un graphe Neo4j
-                                      reliant jeux, règles, régions,
-                                      périodes et catégories.
+```mermaid
 
-  🔗 **Jeux apparentés**              Exploration des relations du graphe
-                                      pour trouver des jeux partageant un
-                                      contexte ou des caractéristiques.
+flowchart TD
 
-  💬 **Questions-réponses (RAG)**     Réponses en langage naturel
-                                      contextualisées par des
-                                      informations récupérées, avec
-                                      Gemini.
+    Q[User question] --> E[Sentence Transformer embeddings]
 
-  🧩 **Plateaux incomplets**          Comparaison entre les
-                                      caractéristiques observées et
-                                      attendues pour aider à repérer les
-                                      éléments manquants.
+    E --> R[Semantic similarity ranking]
 
-  🏗️ **Reconstruction 3D**            Génération de modèles de plateau
-                                      interactifs au format GLB avec
-                                      Trimesh.
+    K[(Neo4j game knowledge graph)] --> D[Game descriptions and metadata]
 
-  📊 **Tableau de bord analytique**   Exploration des indicateurs et de
-                                      la distribution du corpus de jeux.
+    D --> E
 
-  🔄 **Orchestration**                Possibilité d'enchaîner les
-                                      traitements à l'aide de workflows
-                                      n8n.
-  -----------------------------------------------------------------------
+    R --> H[Heuristic re-ranking]
 
-## 🧩 Architecture
+    H --> C[Relevant candidate games]
 
-``` text
-                         ┌───────────────────────────────┐
-                         │        Utilisateurs            │
-                         └───────────────┬───────────────┘
-                                         │
-                    ┌────────────────────┼───────────────────┐
-                    │                    │                   │
-              ┌─────▼─────┐        ┌─────▼─────┐       ┌─────▼─────┐
-              │ Streamlit │        │  Swagger  │       │    n8n    │
-              │ Interface │        │ API docs  │       │ Workflows │
-              └─────┬─────┘        └─────┬─────┘       └─────┬─────┘
-                    └────────────────────┼───────────────────┘
-                                         │
-                                  ┌──────▼──────┐
-                                  │   FastAPI   │
-                                  │  REST API   │
-                                  └──────┬──────┘
-                                         │
-               ┌─────────────────────────┼─────────────────────────┐
-               │                         │                         │
-        ┌──────▼──────┐          ┌───────▼──────┐          ┌───────▼──────┐
-        │   YOLOv8    │          │    Neo4j     │          │  Hybrid RAG  │
-        │ Vision      │          │ Knowledge    │          │ Embeddings + │
-        │ Detection   │          │ Graph        │          │ Gemini       │
-        └──────┬──────┘          └───────┬──────┘          └──────────────┘
-               │                         │
-               └──────────────┬──────────┘
-                              │
-                    ┌─────────▼─────────┐
-                    │ Identification,   │
-                    │ contextualisation │
-                    │ et reconstruction│
-                    └───────────────────┘
+    C --> G[Gemini answer generation, if configured]
+
+    C --> F[Fallback response if generation is unavailable]
+
+    G --> A[Answer with candidate context]
+
+    F --> A
+
 ```
 
-### Chaîne d'analyse
+This diagram represents the text-retrieval path implemented in `phase1_ludii_rag/hybrid_rag.py`: game information is retrieved from Neo4j, descriptions are embedded with `all-MiniLM-L6-v2`, candidates are ranked using cosine similarity and adjusted with metadata-related heuristics, and retrieved context can be passed to Gemini. A fallback path is present if LLM generation is unavailable.
 
-1.  **Entrée** --- l'utilisateur fournit une image, des dimensions ou
-    une description.
-2.  **Perception** --- le module de vision détecte le plateau et/ou les
-    pièces lorsque l'entrée est une image.
-3.  **Structuration** --- les détections et caractéristiques sont
-    transformées en données exploitables.
-4.  **Identification** --- le système compare les caractéristiques
-    observées aux signatures et informations du graphe.
-5.  **Enrichissement** --- Neo4j sert à explorer les relations
-    historiques et les jeux apparentés.
-6.  **Restitution** --- l'application présente les résultats, peut
-    générer une reconstruction 3D et permet de poser des questions en
-    langage naturel via le RAG.
+## 1. Semantic retrieval and RAG
 
-## 📚 Base de connaissances
+The `HybridRAG` module is the clearest AI pipeline in the repository.
 
-Les chiffres du rapport et du dépôt décrivent le graphe construit à
-partir des données Ludii :
+### Current implementation
 
-  Indicateur                           Valeur rapportée
-  -------------------------------- --------------------
-  Jeux documentés                             **1 621**
-  Rulesets / ensembles de règles              **3 337**
-  Signatures visuelles                          **486**
-  Régions historiques                            **28**
-  Périodes chronologiques                        **13**
-  Catégories de jeux                             **52**
-  Relations dans le graphe           **environ 16 739**
+1\. ****Corpus preparation:**** game records and selected metadata are read from Neo4j.
 
-Le corpus couvre des jeux de différentes régions et périodes, des jeux
-anciens comme le Senet aux variantes d'échecs.
+2\. ****Text representation:**** descriptions are built from available game properties.
 
-> **À noter :** le rapport signale des métadonnées géographiques
-> absentes pour environ 35 % des jeux et des métadonnées chronologiques
-> absentes pour environ 55 %. Il mentionne aussi 16 signatures YOLO
-> orphelines. Ces limites peuvent réduire la couverture de certaines
-> recherches contextuelles.
+3\. ****Embedding:**** Sentence Transformers' `all-MiniLM-L6-v2` model encodes the query and game descriptions into vectors.
 
-## 🔬 Module de vision : données et évaluation
+4\. ****Candidate ranking:**** cosine similarity is used to rank descriptions by semantic relevance.
 
-Le corpus de détection a été constitué à partir d'images **synthétiques
-générées avec le moteur Ludii**, puis annotées avec Roboflow et
-exportées au format YOLO. Le modèle retenu est **YOLOv8 Nano**, choisi
-pour son compromis entre rapidité d'inférence et coût de calcul.
+5\. ****Heuristic adjustment:**** signals such as a matching game name, region, or historical period can affect the ranking.
 
-Résultats rapportés dans le PFA sur l'ensemble de test **synthétique** :
+6\. ****Answer generation:**** when configured, Gemini receives the question and retrieved context to generate a natural-language answer. A fallback is used when generation is unavailable.
 
-  Métrique           Résultat
-  -------------- ------------
-  mAP@0.5          **0,9950**
-  mAP@0.5:0.95     **0,9950**
-  Précision        **0,9997**
-  Rappel           **1,0000**
+This is a ****hybrid retrieval approach**** because semantic similarity is combined with explicit metadata heuristics. It should not be described as a trained domain-specific embedding model or as a fully graph-native GraphRAG implementation unless those claims are demonstrated by the code and evaluation.
 
-Ces résultats sont ceux du test synthétique décrit dans le rapport ; ils
-ne doivent pas être interprétés comme une garantie de performance
-équivalente sur des photographies archéologiques réelles. Une évaluation
-sur des images réelles variées reste importante pour mesurer la
-généralisation du modèle.
+### What still needs evaluation
 
-## 🛠️ Stack technique
+The presence of an embedding model or an LLM does not by itself establish retrieval quality. Useful next steps are to build a small, manually checked set of questions and relevant games, then measure Recall@k, Precision@k or MRR. LLM answers should separately be checked for factual support by the retrieved records, hallucinations, and consistency across repeated queries.
 
-  -----------------------------------------------------------------------
-  Composant                           Technologie
-  ----------------------------------- -----------------------------------
-  Langage principal                   Python 3.11
+## 2. Knowledge graph as the domain knowledge layer
 
-  Détection d'objets                  Ultralytics YOLOv8 Nano
+Neo4j stores game information and relationships used by the retrieval and import code. Import scripts under `phase4_neo4j/` cover game records and related information such as signatures, regions, periods, and rules/features.
 
-  Graphe de connaissances             Neo4j 5.x, Cypher
+The graph is a structured knowledge source; it is not itself an AI model. Its value depends on the quality of the imported data, the relationships represented, and whether the retrieval pipeline uses those relationships effectively.
 
-  API REST                            FastAPI, Uvicorn, Pydantic
+The repository documentation reports the following corpus figures, which should be treated as ****documented counts, not independently verified evaluation results****:
 
-  Interface web                       Streamlit
+- 1,621 games
 
-  RAG / modèle de langage             Sentence Transformers
-                                      (`all-MiniLM-L6-v2`) et Gemini
+- 3,337 rulesets
 
-  Reconstruction 3D                   Trimesh, format GLB
+- approximately 16,739 relationships
 
-  Visualisation                       Plotly
+- 28 regions and 13 historical periods
 
-  Orchestration                       n8n, Docker
+Counts can differ depending on the import state and database contents. Recalculate them directly from the active Neo4j instance before using them in a presentation or CV, and resolve any discrepancies between the README, UI, and database.
 
-  Source de connaissances ludique     Base et moteur Ludii
-  -----------------------------------------------------------------------
+## 3. Computer vision experiments
 
-## 📁 Organisation du dépôt
+The `phase2_vision/` directory contains YOLO-oriented detection code for board-game elements, including board/piece detection-related modules. The API also includes a game-identification path.
 
-``` text
-ludii-game-intelligence/
-├── docs/                 # Documentation du projet
-├── models/               # Modèles et artefacts associés
-├── phase1_ludii_rag/      # RAG hybride : embeddings, Gemini et recours au graphe
-├── phase2_vision/         # Détection du plateau/des pièces et reconstruction 3D
-├── phase3_api/            # API FastAPI et routes applicatives
-├── phase4_neo4j/          # Import, enrichissement et requêtes du graphe
-├── phase5_n8n/            # Workflows d’orchestration
-├── phase6_advanced/       # Fonctionnalités avancées
-├── tests/                 # Tests
-├── app.py                 # Interface Streamlit
-├── requirements.txt       # Dépendances Python
-├── Dockerfile
-├── docker-compose.yml
-└── README.md
+The intended AI flow is:
+
+```mermaid
+
+flowchart TD
+
+    I[Board-game image] --> Y[YOLO inference]
+
+    Y --> O[Detected objects and confidence scores]
+
+    O --> X[Feature extraction]
+
+    X --> M[Compare with game signatures or metadata]
+
+    M --> R[Rank candidate games]
+
+    R --> V[Candidate identification output]
+
 ```
 
-## 🚀 Installation et démarrage
+This is the conceptual workflow, not a claim of measured performance. Before reporting an image-based identification result, verify that the endpoint actually accepts the image, runs the model, transforms detections into the features expected by the matching logic, and returns traceable candidates. If the current endpoint accepts pre-extracted JSON features rather than an image file, document that as the actual interface.
 
-### Prérequis
+### Evaluation needed
 
--   Python **3.11+**
--   Neo4j **5.x** accessible localement ou sur un serveur
--   Une clé API Gemini pour les fonctionnalités RAG utilisant le modèle
--   Docker, si vous souhaitez exécuter n8n ou les services conteneurisés
+For a meaningful computer-vision result, document the dataset and annotation procedure, train/validation/test split, model checkpoint, class definitions, and metrics such as precision, recall, and mAP. For game-level identification, also measure top-1 and top-k accuracy on held-out images. No accuracy figure should be claimed unless it has been measured on a clearly defined test set.
 
-### 1. Cloner le dépôt
+## 4. 3D board representation
 
-``` bash
-git clone https://github.com/salma12814/ludii-game-intelligence.git
-cd ludii-game-intelligence
+The repository contains 3D-related code using Trimesh and a `reconstructed.glb` artifact. This indicates exploration of board geometry/export, but the presence of a GLB file alone does not prove that arbitrary input images can be reconstructed automatically or accurately.
+
+A stronger experiment would define what is reconstructed, what inputs are required, how geometry is inferred, and how the output is validated against reference boards. Until then, present this as an exploratory component rather than a completed AI reconstruction model.
+
+## 5. Overall architecture and data flow
+
+```mermaid
+
+flowchart TB
+
+    subgraph Knowledge[Domain knowledge]
+
+        DATA[Game records and metadata]
+
+        GRAPH[(Neo4j knowledge graph)]
+
+        DATA --> GRAPH
+
+    end
+
+    subgraph TextAI[Text retrieval and question answering]
+
+        QUESTION[Natural-language question]
+
+        EMB[Sentence Transformer]
+
+        RANK[Cosine similarity + metadata heuristics]
+
+        CONTEXT[Retrieved game context]
+
+        LLM[Gemini, optional]
+
+        QUESTION --> EMB
+
+        GRAPH --> RANK
+
+        EMB --> RANK
+
+        RANK --> CONTEXT
+
+        CONTEXT --> LLM
+
+    end
+
+    subgraph VisionAI[Visual analysis experiments]
+
+        IMAGE[Board-game image]
+
+        YOLO[YOLO-based detection]
+
+        FEATURES[Detected elements / features]
+
+        CANDIDATES[Candidate matching]
+
+        IMAGE --> YOLO --> FEATURES --> CANDIDATES
+
+        GRAPH -. metadata/signatures, if integrated .-> CANDIDATES
+
+    end
+
+    CONTEXT --> RESULT[Retrieved candidates / answer]
+
+    LLM --> RESULT
+
+    CANDIDATES --> VRESULT[Visual candidate output]
+
 ```
 
-### 2. Créer l'environnement Python
+The text RAG path is the most clearly described end-to-end AI component. The dashed connection between the graph and visual matching is conditional on the current integration and must be confirmed by a working test. The visual path should not be assumed to feed the RAG path automatically.
 
-**Windows (PowerShell)**
+### Data preparation flow
 
-``` powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+```mermaid
+
+flowchart LR
+
+    SRC[Source game data] --> IMP[Import and normalization scripts]
+
+    IMP --> GRAPH[(Neo4j)]
+
+    GRAPH --> CORPUS[Descriptions and metadata for retrieval]
+
+    CORPUS --> EMB[Embeddings and candidate ranking]
+
+```
+
+Data quality is a core part of this project: missing descriptions, inconsistent names, duplicate game records, or incomplete region/period metadata can directly affect retrieval and matching quality.
+
+## 6. Repository map
+
+\| Path | AI/data role |
+
+\|---|---|
+
+\| `phase1_ludii_rag/hybrid_rag.py` | Semantic retrieval, candidate ranking, and LLM-assisted answer generation |
+
+\| `phase2_vision/` | YOLO-oriented detection and experimental board/piece analysis |
+
+\| `phase3_api/` | API wrappers exposing retrieval and vision functionality for the application |
+
+\| `phase4_neo4j/` | Data import scripts for the game knowledge graph |
+
+\| `phase5_n8n/` | Workflow automation experiments; role in the core AI path should be verified |
+
+\| `phase6_advanced/` | Additional/advanced experiments; individual components should be evaluated independently |
+
+\| `models/` | Model-related files, depending on the repository contents |
+
+\| `tests/` | Automated tests; test coverage and AI evaluation coverage should be reviewed separately |
+
+\| `app.py` | Streamlit interface for interacting with available functionality |
+
+The API and interface are supporting layers. The main project story is the use of structured game knowledge, semantic retrieval, LLM-assisted answers, and visual-detection experiments—not the web framework itself.
+
+## 7. Running the prototype
+
+The following commands reflect the repository's documented development workflow; exact prerequisites and environment variables should be checked against the current files.
+
+### Environment
+
+Use Python 3.11 if compatible with the dependency versions in the repository. Create and activate a virtual environment:
+
+```bash
+
+python -m venv .venv
+
+```
+
+Windows PowerShell:
+
+```powershell
+
+.\\.venv\Scripts\Activate.ps1
+
 pip install -r requirements.txt
+
 ```
 
-**Linux / macOS**
+macOS/Linux:
 
-``` bash
-python3 -m venv venv
-source venv/bin/activate
+```bash
+
+source .venv/bin/activate
+
 pip install -r requirements.txt
+
 ```
 
-### 3. Configurer les variables d'environnement
+### Supporting services and data
 
-Créez un fichier `.env` à partir du modèle fourni :
+If using the supplied Compose setup, review `docker-compose.yml` before starting it. Configure Neo4j credentials using environment variables or a local `.env` file; do not reuse example credentials in a public deployment.
 
-``` bash
-cp .env.example .env
-```
+Run the data import scripts only after confirming their input files and prerequisites:
 
-Sous Windows, vous pouvez aussi copier manuellement `.env.example` vers
-`.env`.
+```bash
 
-Renseignez les valeurs correspondant à votre environnement :
-
-``` dotenv
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=your_neo4j_password
-GEMINI_API_KEY=your_gemini_api_key
-```
-
-Ne publiez jamais vos clés API ni vos mots de passe dans GitHub.
-
-### 4. Construire / enrichir le graphe Neo4j
-
-Démarrez Neo4j et exécutez les scripts d'importation dans l'ordre
-indiqué par le projet :
-
-``` bash
 python phase4_neo4j/import_mysql_to_neo4j.py
+
 python phase4_neo4j/import_lud_signatures.py
+
 python phase4_neo4j/import_regions_periods.py
+
 python phase4_neo4j/import_rules_features.py
+
 ```
 
-Cette étape dépend des sources de données et des fichiers nécessaires
-présents dans votre environnement. Vérifiez les chemins et la
-configuration avant de lancer l'import.
+The imports may depend on source datasets or an existing database. Check the scripts before running them and verify the resulting graph with queries.
 
-### 5. Démarrer l'API FastAPI
+### Launch the prototype
 
-À la racine du projet :
+Start the API:
 
-``` bash
+```bash
+
 uvicorn phase3_api.main:app --reload --host 127.0.0.1 --port 8000
+
 ```
 
-Documentation interactive : <http://localhost:8000/docs>
+Open the interactive API documentation at `http\://localhost:8000/docs` when the API is running.
 
-### 6. Démarrer l'interface Streamlit
+In a separate terminal, launch the interface:
 
-Dans un autre terminal, avec le même environnement Python activé :
+```bash
 
-``` bash
 streamlit run app.py
+
 ```
 
-Interface : <http://localhost:8501>
+Some components may require model weights, API keys, or separately running services. The app starting successfully does not guarantee that every AI path is configured or operational.
 
-### 7. (Optionnel) Démarrer n8n
+## 8. Configuration and responsible claims
 
-Si Docker est installé :
+- Keep Gemini API keys and database credentials in environment variables; never commit secrets.
 
-``` bash
-docker run -d --name n8n -p 5678:5678 n8nio/n8n
-```
+- Check that the Neo4j connection settings match the local environment.
 
-Interface n8n : <http://localhost:5678>
+- Treat generated answers as suggestions grounded in retrieved records, not as verified historical facts.
 
-Importez ensuite le workflow fourni dans le dépôt, s'il est présent dans
-la version récupérée.
+- Keep the original source record or game metadata available so users can inspect why a candidate was returned.
 
-## 🧪 Exemples de requêtes API
+- Report model versions, dataset splits, evaluation metrics, and failure cases for any claimed AI performance.
 
-Les routes ci-dessous correspondent aux exemples documentés dans le
-dépôt. L'API doit être démarrée au préalable.
+- Distinguish model outputs from heuristic ranking signals; they are different sources of evidence.
 
-### Identification à partir de dimensions
+## 9. Current limitations and next AI milestones
 
-``` bash
-curl -X POST "http://localhost:8000/api/v1/identify_game_from_yolo" \
-  -H "Content-Type: application/json" \
-  -d '{"board_cols": 8, "board_rows": 8, "total_pieces": 32, "pieces": []}'
-```
+- [ ] ****Retrieval benchmark:**** create a manually reviewed query-to-game dataset and report Recall@k, MRR, and representative failure cases.
 
-### Question en langage naturel
+- [ ] ****Ablation study:**** compare semantic similarity alone against semantic similarity plus metadata heuristics.
 
-``` bash
-curl "http://localhost:8000/api/v1/rag/ask?question=Explique-moi%20les%20règles%20du%20Senet"
-```
+- [ ] ****Grounded generation evaluation:**** measure whether Gemini answers are supported by retrieved game records; include a no-answer/low-confidence path.
 
-Les champs requis et les paramètres acceptés peuvent évoluer ; consultez
-la documentation Swagger à `/docs` pour le schéma exact de la version
-installée.
+- [ ] ****Graph-aware retrieval:**** verify whether relationships in Neo4j influence candidate selection, rather than merely supplying flat metadata. Only then describe the implementation as GraphRAG.
 
-## 🖥️ Services locaux
+- [ ] ****Vision benchmark:**** document the YOLO checkpoint, dataset, labels, test split, precision/recall/mAP, and failure cases.
 
-  Service           Adresse par défaut
-  ----------------- ---------------------------------------------------
-  API FastAPI       [localhost:8000](http://localhost:8000)
-  Swagger UI        [localhost:8000/docs](http://localhost:8000/docs)
-  Streamlit         [localhost:8501](http://localhost:8501)
-  n8n (optionnel)   [localhost:5678](http://localhost:5678)
-  Neo4j Browser     [localhost:7474](http://localhost:7474)
+- [ ] ****Game identification benchmark:**** measure top-1/top-k accuracy on held-out board images and compare against a simple baseline.
 
-## 🎓 Contexte académique
+- [ ] ****Multimodal integration test:**** demonstrate, with a reproducible example, how detections are converted into game candidates and whether graph data is used.
 
-Projet de fin d'année réalisé à l'**École Nationale Supérieure
-d'Informatique et d'Analyse des Systèmes (ENSIAS)**, filière **Data &
-Software Sciences**, année universitaire **2025--2026**.
+- [ ] ****3D validation:**** define the input assumptions and compare generated geometry with a reference board.
 
-**Intitulé :** *Ludii Game Intelligence: Système Intelligent de
-Reconnaissance, Raisonnement et Reconstruction des Jeux de Table
-Historiques*
+- [ ] ****Data validation:**** check duplicates, missing metadata, graph integrity, and consistency between documented counts and the actual database.
 
--   **Réalisé par :** Soukaina Sabbar et Salma Issam
--   **Encadrant :** Pr. Khalid Nafil
--   **Jury :** Pr. Mohamed Radouane
--   **Soutenance :** 19 juin 2026
+- [ ] ****Reproducibility:**** document model versions, configuration, dataset sources, random seeds where applicable, and exact steps to reproduce evaluation.
 
-## 🔭 Pistes d'amélioration
+## 10. Project positioning
 
-En cohérence avec les limites identifiées dans le rapport, les pistes
-suivantes sont pertinentes :
+A precise description of the current work is:
 
--   Évaluer le détecteur sur des photographies réelles, avec des
-    conditions de lumière, de perspective et d'usure variées.
--   Améliorer la couverture des métadonnées géographiques et
-    chronologiques.
--   Résoudre les associations de signatures visuelles qui restent
-    orphelines.
--   Mesurer séparément la qualité de l'identification, la détection des
-    pièces manquantes et la pertinence des réponses RAG.
--   Documenter les dépendances externes, les variables de configuration
-    et les procédures de déploiement de façon reproductible.
+> An experimental AI project for exploring historical board games through semantic retrieval, knowledge-graph-backed metadata, LLM-assisted question answering, and YOLO-based visual-analysis components.
 
-## 📄 Rapport du projet
+This wording highlights the AI work without claiming that the project is a production-ready multimodal system, that the vision model has a particular accuracy, or that every component is fully integrated.
 
-Le rapport de PFA présente le contexte, l'état de l'art, l'analyse et la
-conception, la constitution du jeu de données de vision, le graphe Neo4j
-et l'intégration de la plateforme. Si vous souhaitez le consulter
-directement depuis GitHub, ajoutez le PDF au dépôt (par exemple dans
-`docs/`) et créez ici un lien relatif vers son nom exact.
+## License and data sources
 
-## 👥 Équipe
-
--   **Salma Issam**
--   **Soukaina Sabbar**
-
-## 📜 Licence
-
-Le README initial du dépôt indique une licence MIT. Vérifiez que le
-fichier `LICENSE` correspondant est bien présent et cohérent avec les
-dépendances et ressources externes utilisées avant toute redistribution.
-
-------------------------------------------------------------------------
-
-::: {align="center"}
-**Ludii Game Intelligence**\
-*L'intelligence artificielle au service du patrimoine ludique.*
-:::
+Add the applicable code license and document the provenance and usage terms of the game data, model weights, and other third-party assets. Do not imply that source datasets or model assets are covered by the project's code license unless their terms confirm it.
